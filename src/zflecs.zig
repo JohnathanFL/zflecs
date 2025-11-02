@@ -3614,7 +3614,18 @@ pub extern fn FlecsStatsImport(world: *world_t) void;
 //
 //--------------------------------------------------------------------------------------------------
 
-pub extern fn FlecsRestImport(world: *world_t) void;
+// Extra struct in order to still have it use that name, but also let us override some behavior without
+// breaking existing API.
+const Rest = struct {
+    extern fn FlecsRestImport(world: *world_t) void;
+};
+
+pub fn FlecsRestImport(world: *world_t) void {
+    Rest.FlecsRestImport(world);
+    // Reconcile Zig's view of component IDs with what flecs knows to be true.
+    // Else, the ID will be zero and Mr. SIGSEGV will be very cross.
+    perTypeGlobalVarPtr(EcsRest).* = lookup_fullpath(world, "flecs.rest.Rest");
+}
 
 pub const EcsRest = extern struct {
     port: u16 = 0,
